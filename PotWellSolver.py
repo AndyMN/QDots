@@ -91,7 +91,7 @@ class PotWellSolver:
             subdiagS = np.sqrt(3)*self.compound.getY3()*kz*1j/(pi**2*self.stepSize)
             superdiagS = -np.sqrt(3)*self.compound.getY3()*kz*1j/(pi**2*self.stepSize)
 
-        
+
         w, v = eigh(HKL)
         return w*unitE, v
 
