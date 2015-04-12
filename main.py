@@ -14,7 +14,7 @@ myPlotter = Plotter()
 
 
 
-myPlotter.plotMixing(myPotWellSolver, kVec)
+myPlotter.plotMixing(myPotWellSolver, arange(0,1,0.1))
 myPlotter.displayPlots()
 
 
