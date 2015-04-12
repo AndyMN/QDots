@@ -12,9 +12,9 @@ myPotWellSolver = PotWellSolver(GaAs, myPotWell, 6)
 myPotWellSolver.setGridPoints(100)
 myPlotter = Plotter()
 
+kVec = arange(-3, 3, 0.1)
 
-
-myPlotter.plotMixing(myPotWellSolver, arange(0,1,0.1))
+myPlotter.plotMixing(myPotWellSolver, kVec)
 myPlotter.displayPlots()
 
 
