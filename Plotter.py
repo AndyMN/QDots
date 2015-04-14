@@ -45,6 +45,19 @@ class Plotter:
         plot(kVec, fractionMatrix.T)
         self.setMixingPlotLabels(potWellSolver)
 
+    def plotGridPointAnalysis(self, potWellSolver, gridPointVec, nSmallest=1, k=0,  state=0):
+        eigenValues = zeros((nSmallest, len(gridPointVec)))
+        startNGridPoints = potWellSolver.nGridPoints
+        column = 0
+        for gridPoint in gridPointVec:
+            potWellSolver.setGridPoints(gridPoint)
+            w = potWellSolver.getEigenValues(k, nSmallest)
+            for i in xrange(nSmallest):
+                eigenValues[i][column] = w[i]
+            column += 1
+        potWellSolver.setGridPoints(startNGridPoints)
+        plot(gridPointVec, eigenValues.T)
+        self.setGridPointAnalysisPlotLabels(potWellSolver, nSmallest, k)
 
     def displayPlots(self):
         title(self.title)
@@ -52,6 +65,13 @@ class Plotter:
         ylabel(self.yLabel)
         legend(self.legend)
         show()
+
+    def setGridPointAnalysisPlotLabels(self, potWellSolver, nSmallest, k):
+        self.xLabel = "# Gridpoints"
+        self.yLabel = "E(meV)"
+        self.title = potWellSolver.compound.name+": E(N) op k = "+str(k)
+        for i in xrange(nSmallest):
+            self.legend.append("E"+str(i+1))
 
     def setEigenvectorPlotLabels(self, potWellSolver):
         potWellDirection = potWellSolver.potWell.direction
