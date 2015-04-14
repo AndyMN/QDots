@@ -7,21 +7,6 @@ pi = math.pi
 unitE = (hbar**2*pi**2)/(2*massElectron*wellWidth**2)
 
 
-
-def fillMe(M,fillM,i,j,n):
-    for x in xrange(i*n,(i+1)*n):
-        for y in xrange(j*n, (j+1)*n):
-            M[x][y] = fillM[x-i*n][y-j*n]
-
-def fillTotal(M,fillM,n):
-    i = 0
-    for row in fillM:
-        j = 0
-        for item in row:
-            fillMe(M, item, i, j, n)
-            j += 1
-        i += 1
-
 class PotWellSolver:
 
     def __init__(self, compound, potWell, matrixDim=4):

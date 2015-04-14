@@ -43,9 +43,7 @@ class Plotter:
                     fractionMatrix[i][column] = fractions[4] + fractions[5]
             column += 1
         plot(kVec, fractionMatrix.T)
-
-
-
+        self.setMixingPlotLabels(potWellSolver)
 
     def setTitle(self, title):
         self.title = title
@@ -110,4 +108,27 @@ class Plotter:
                 self.legend.append("E"+str(i+1)+" "+matrixType)
 
             self.yLabel = "E (meV)"
-            self.xLabel = "k("+directionOfK+") (1/cm)"
+            self.xLabel = "k"+directionOfK+" (1/cm)"
+
+    def setMixingPlotLabels(self, potWellSolver):
+        directionOfK = None
+        if potWellSolver.potWell.getNDirection() == 1:
+            directionOfK = "z"
+        elif potWellSolver.potWell.getNDirection() == 3:
+            directionOfK = "x"
+        matrixType = None
+        if potWellSolver.getMatrixDim() == 4:
+            matrixType = "4x4"
+        elif potWellSolver.getMatrixDim() == 6:
+            matrixType = "6x6"
+        self.yLabel = "Fraction"
+        self.xLabel = "k"+directionOfK+" (1/cm)"
+        potWellDirection = potWellSolver.potWell.getDirection()
+        if not self.title:
+            self.title = potWellSolver.compound.getName()+": Golffuncties Mixing: put in "+potWellDirection+" richting ("+matrixType+")"
+        else:
+            self.title += " + Golffuncties Mixing: put in "+potWellDirection+" richting ("+matrixType+")"
+        self.legend.append("HH"+potWellDirection)
+        self.legend.append("LH"+potWellDirection)
+        if potWellSolver.getMatrixDim() == 6:
+            self.legend.append("SO"+potWellDirection)
