@@ -18,21 +18,3 @@ class PotentialWell:
             self.nDirection = 2
         elif self.direction == "z":
             self.nDirection = 3
-
-    def setDepth(self, depth):
-        self.depth = depth
-
-    def setWidth(self, width):
-        self.width = width
-
-    def getDirection(self):
-        return self.direction
-
-    def getDepth(self):
-        return self.depth
-
-    def getWidth(self):
-        return self.width
-
-    def getNDirection(self):
-        return self.nDirection

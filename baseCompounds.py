@@ -16,6 +16,8 @@ class Compound:
             self.name = "GaAs"
         elif params == SiValues:
             self.name = "SiO2"
+        else:
+            self.name = "Unknown"
 
     def getName(self):
         return self.name

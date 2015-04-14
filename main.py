@@ -3,9 +3,6 @@ from PotentialWell import PotentialWell
 from PotWellSolver import PotWellSolver
 from Plotter import Plotter
 from pylab import *
-from scipy.sparse import issparse
-from scipy.sparse import diags
-from scipy.sparse.linalg import eigsh
 
 GaAs = Compound(GaAsValues)
 myPotWell = PotentialWell("z", 130, 1)
