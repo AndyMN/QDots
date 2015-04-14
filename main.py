@@ -13,10 +13,11 @@ myPlotter = Plotter()
 
 
 kVec = arange(-3, 3, 0.1)
-gridPointVec = arange(10, 350, 10)
+gridPointVec = arange(10, 100, 10)
 
-myPlotter.plotGridPointAnalysis(myPotWellSolver, gridPointVec, 2)
+myPlotter.plotEigenvalues(myPotWellSolver, kVec, 6)
 myPlotter.displayPlots()
+
 
 
 
