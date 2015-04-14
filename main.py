@@ -8,15 +8,14 @@ GaAs = Compound(GaAsValues)
 myPotWell = PotentialWell("z", 130, 1)
 
 myPotWellSolver = PotWellSolver(GaAs, myPotWell, 6)
-
 myPotWellSolver.setGridPoints(100)
-
 myPlotter = Plotter()
 
 
 kVec = arange(-3, 3, 0.1)
+gridPointVec = arange(10, 350, 10)
 
-myPlotter.plotMixing(myPotWellSolver, kVec)
+myPlotter.plotGridPointAnalysis(myPotWellSolver, gridPointVec, 2)
 myPlotter.displayPlots()
 
 

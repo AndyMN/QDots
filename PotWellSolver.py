@@ -150,9 +150,9 @@ class PotWellSolver:
         if type(kVec) == int:
             eigenValues = self.calcEigVals(kVec)
             eigenValues = sorted(eigenValues)
-            EArray = np.zeros((1,nSmallest))
+            EArray = np.zeros(nSmallest)
             for i in xrange(0, nSmallest):
-                EArray[0][i] = eigenValues[i*2].real
+                EArray[i] = eigenValues[i*2].real
             return EArray
         else:
             EMatrix = np.zeros((nSmallest, len(kVec)))
