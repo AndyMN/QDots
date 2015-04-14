@@ -1,6 +1,7 @@
 SiValues = [4.26, 0.38, 1.56, 44]
 GaAsValues = [6.85, 2.1, 2.9, 341]
 
+
 class Compound:
     def __init__(self, params):
         self.y1 = params[0]

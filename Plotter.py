@@ -25,7 +25,7 @@ class Plotter:
         eigenVector = potWellSolver.getEigenvectors(k, state)
         vectorMatrix = zeros((potWellSolver.getGridPoints(), potWellSolver.getMatrixDim()))
         for i in xrange(0, potWellSolver.getMatrixDim()):
-            vectorMatrix[:,i] = eigenVector[i*potWellSolver.getGridPoints():(i+1)*potWellSolver.getGridPoints()].real
+            vectorMatrix[:,i] = np.squeeze(np.array(eigenVector[i*potWellSolver.getGridPoints():(i+1)*potWellSolver.getGridPoints()].real))
         plot(xVec, vectorMatrix.real)
         self.setEigenvectorPlotLabels(potWellSolver)
 
@@ -34,7 +34,7 @@ class Plotter:
         column = 0
         for k in kVec:
             fractions = potWellSolver.getMixing(k, state)
-            for i in xrange(0,potWellSolver.getMatrixDim()/2):
+            for i in xrange(potWellSolver.getMatrixDim()/2):
                 if i == 0:
                     fractionMatrix[i][column] = fractions[0] + fractions[3]
                 elif i == 1:

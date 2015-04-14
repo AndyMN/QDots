@@ -45,8 +45,8 @@ class PotWellSolver:
         self.xMax = xMax
         self.xAxisVector = np.linspace(self.xMin, self.xMax, self.nGridPoints)
         self.stepSize = (self.xMax-self.xMin)/float(len(self.xAxisVector))
-        self.potWellBoundary1 = len(self.xAxisVector)/2 - np.floor(self.potWell.getWidth()/(2*self.stepSize))
-        self.potWellBoundary2 = len(self.xAxisVector)/2 + np.ceil(self.potWell.getWidth()/(2*self.stepSize))
+        self.potWellBoundary1 = len(self.xAxisVector)/2. - np.floor(self.potWell.getWidth()/(2.*self.stepSize))
+        self.potWellBoundary2 = len(self.xAxisVector)/2. + np.ceil(self.potWell.getWidth()/(2.*self.stepSize))
 
 
     def getXAxisVector(self):
@@ -55,49 +55,81 @@ class PotWellSolver:
     def setGridPoints(self, nGridPoints):
         self.setParameters(nGridPoints)
 
-    def solveMatrix(self, k1):
-
+    def makeMatrix(self, k):
         ky = 0
-        diagP = None
-        subdiagP = None
-        superdiagP = None
-        diagQ = None
-        subdiagQ = None
-        superdiagQ = None
-        diagS = None
-        subdiagS = None
-        superdiagS = None
-        diagR = None
-        subdiagR = None
-        superdiagR = None
 
-        HKL = np.zeros((self.matrixDim*self.nGridPoints, self.matrixDim*self.nGridPoints), dtype=complex)
-
-        if self.potWell.getNDirection() == 1:
-            kz = k1
-            diagP = (self.compound.getY1()/pi**2)*((kz**2+ky**2) + 2./self.stepSize**2)
-            subdiagP = -self.compound.getY1()/(self.stepSize**2*pi**2)
-            superdiagP = subdiagP
-
-            diagQ = (self.compound.getY2()/pi**2) * ((-2.*kz**2+ky**2)+(2/self.stepSize**2))
-            subdiagQ = -self.compound.getY2()/(self.stepSize**2*pi**2)
-            superdiagQ = subdiagQ
-
-            diagR = (np.sqrt(3)*self.compound.getY2()/pi**2) * (-2/self.stepSize**2 + ky**2)
-            subdiagR = (np.sqrt(3)/pi**2)*(self.compound.getY2()/self.stepSize**2 - self.compound.getY3()*ky/self.stepSize)
-            superdiagR = (np.sqrt(3)/pi**2)*(self.compound.getY2()/self.stepSize**2 + self.compound.getY3()*ky/self.stepSize)
-
-            diagS = -2.*self.compound.getY3()*np.sqrt(3)*1j*ky*kz/pi**2
-            subdiagS = np.sqrt(3)*self.compound.getY3()*kz*1j/(pi**2*self.stepSize)
-            superdiagS = -np.sqrt(3)*self.compound.getY3()*kz*1j/(pi**2*self.stepSize)
+        potVec = zeros(self.nGridPoints)
+        potVec[0:self.potWellBoundary1] = self.unitV
+        potVec[self.potWellBoundary2:self.nGridPoints] = self.unitV
+        V = diag(potVec)
 
 
+        diagP = (self.compound.getY1()/pi**2)*(k**2 + 2./self.stepSize**2)
+        subdiagP = -self.compound.getY1()/(self.stepSize**2*pi**2)
+        superdiagP = subdiagP
+        P = zeros((self.nGridPoints, self.nGridPoints), dtype=complex)
+        i, j = indices(P.shape)
+        P[i == j] = diagP
+        P[i == j-1] = superdiagP
+        P[i == j+1] = subdiagP
+
+        diagQ = (self.compound.getY2()/pi**2) * ((-2*k**2)+(2/self.stepSize**2))
+        subdiagQ = -self.compound.getY2()/(self.stepSize**2*pi**2)
+        superdiagQ = subdiagQ
+        Q = zeros((self.nGridPoints, self.nGridPoints), dtype=complex)
+        i, j = indices(Q.shape)
+        Q[i == j] = diagQ
+        Q[i == j-1] = superdiagQ
+        Q[i == j+1] = subdiagQ
+
+        diagR = (np.sqrt(3)*self.compound.getY2()/pi**2) * (-2/self.stepSize**2 + ky**2)
+        subdiagR = (np.sqrt(3)/pi**2)*(self.compound.getY2()/self.stepSize**2 - self.compound.getY3()*ky/self.stepSize)
+        superdiagR = (np.sqrt(3)/pi**2)*(self.compound.getY2()/self.stepSize**2 + self.compound.getY3()*ky/self.stepSize)
+        R = zeros((self.nGridPoints, self.nGridPoints), dtype=complex)
+        i, j = indices(R.shape)
+        R[i == j] = diagR
+        R[i == j-1] = superdiagR
+        R[i == j+1] = subdiagR
+
+        diagS = -2.*self.compound.getY3()*np.sqrt(3)*1j*ky*k/pi**2
+        subdiagS = np.sqrt(3)*self.compound.getY3()*k*1j/(pi**2*self.stepSize)
+        superdiagS = -np.sqrt(3)*self.compound.getY3()*k*1j/(pi**2*self.stepSize)
+        S = zeros((self.nGridPoints, self.nGridPoints), dtype=complex)
+        i, j = indices(S.shape)
+        S[i == j] = diagS
+        S[i == j-1] = superdiagS
+        S[i == j+1] = subdiagS
+
+        HKL = None
+        if self.matrixDim == 6:
+            Delta = diag(ones(self.nGridPoints)*self.unitDelta)
+            HKL = np.bmat([[P+Q+V, -S, R, zeros((self.nGridPoints, self.nGridPoints)), -S/np.sqrt(2), np.sqrt(2)*R],
+                            [-S.conj().T, P-Q+V, zeros((self.nGridPoints, self.nGridPoints)), R, -np.sqrt(2)*Q, np.sqrt(3./2.)*S],
+                            [R.conj().T, zeros((self.nGridPoints, self.nGridPoints)), P-Q+V, S, np.sqrt(3./2.)*S.conj().T, np.sqrt(2)*Q],
+                            [zeros((self.nGridPoints, self.nGridPoints)), R.conj().T, S.conj().T, P+Q+V, -np.sqrt(2)*R.conj().T, -S.conj().T/np.sqrt(2)],
+                            [-S.conj().T/np.sqrt(2), -np.sqrt(2)*Q.conj().T, np.sqrt(3./2.)*S, -np.sqrt(2)*R, P+Delta+V, zeros((self.nGridPoints, self.nGridPoints))],
+                            [np.sqrt(2)*R.conj().T, np.sqrt(3./2.)*S.conj().T, np.sqrt(2)*Q.conj().T, -S/np.sqrt(2), zeros((self.nGridPoints, self.nGridPoints)), P+Delta+V]])
+        elif self.matrixDim == 4:
+            HKL = np.bmat([[P+Q+V, -S, R, zeros((self.nGridPoints, self.nGridPoints))],
+                            [-S.conj().T, P-Q+V, zeros((self.nGridPoints, self.nGridPoints)), R],
+                            [R.conj().T, zeros((self.nGridPoints, self.nGridPoints)), P-Q+V, S],
+                            [zeros((self.nGridPoints, self.nGridPoints)), R.conj().T, S.conj().T, P+Q+V]])
+        return HKL
+
+
+    def calcEigs(self, k):
+        HKL = self.makeMatrix(k)
         w, v = eigh(HKL)
         return w*unitE, v
 
+    def calcEigVals(self, k):
+        HKL = self.makeMatrix(k)
+        w = eigvalsh(HKL)
+        return w*unitE
+
     def getEigenValues(self, kVec, nSmallest):
         if type(kVec) == int:
-            eigenValues, eigenVectors = self.solveMatrix(kVec)
+            eigenValues = self.calcEigVals(kVec)
             eigenValues = sorted(eigenValues)
             EArray = np.zeros((1,nSmallest))
             for i in xrange(0, nSmallest):
@@ -107,7 +139,7 @@ class PotWellSolver:
             EMatrix = np.zeros((nSmallest, len(kVec)))
             column = 0
             for k in kVec:
-                eigenValues, eigenVectors = self.solveMatrix(k)
+                eigenValues = self.calcEigVals(k)
                 eigenValues = sorted(eigenValues)
                 for i in xrange(0, nSmallest):
                     EMatrix[i][column] = eigenValues[i*2].real
@@ -115,27 +147,29 @@ class PotWellSolver:
             return EMatrix
 
     def getEigenvectors(self, k, state):
-        w, v = self.solveMatrix(k)
+        w, v = self.calcEigs(k)
         data = [(w[i], v[:,i]) for i in xrange(0, self.matrixDim*self.nGridPoints)]
         data = sorted(data, key=itemgetter(0))
         return data[state][1]
 
     def getMixing(self, k, state):
-        w, v = self.solveMatrix(k)
-        data = [(w[i], v[:,i]) for i in xrange(0, self.matrixDim*self.nGridPoints)]
+        w, v = self.calcEigs(k)
+        data = [(w[i], v[:,i]) for i in xrange(self.matrixDim*self.nGridPoints)]
         data = sorted(data, key=itemgetter(0))
         eigenVector = data[state][1]
-        splitVectors = np.zeros((self.nGridPoints, self.matrixDim),dtype=complex)
-        for i in xrange(0,self.matrixDim):
-            splitVectors[:,i] = eigenVector[i*self.nGridPoints:(i+1)*self.nGridPoints]
+        splitVectors = np.zeros((self.nGridPoints, self.matrixDim), dtype=complex)
+        for i in xrange(self.matrixDim):
+            splitVectors[:,i] = np.squeeze(np.array(eigenVector[i*self.nGridPoints:(i+1)*self.nGridPoints]))
 
-        normSQ = np.zeros((1,self.matrixDim))
-        for i in xrange(0,self.matrixDim):
-            normSQ[0][i] = norm(splitVectors[:,i])**2
-        totalDensity = sum(normSQ[0])
+        normSQ = np.zeros(self.matrixDim)
+        for i in xrange(self.matrixDim):
+            normSQ[i] = norm(splitVectors[:,i])**2
+
+        totalDensity = sum(normSQ)
+
         fractions = []
-        for i in xrange(0,self.matrixDim):
-            fractions.append(normSQ[0][i]/totalDensity)
+        for i in xrange(self.matrixDim):
+            fractions.append(normSQ[i]/totalDensity)
         return fractions
 
 
