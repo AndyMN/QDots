@@ -15,7 +15,7 @@ class PotWellSolver:
         self.matrixDim = matrixDim
         self.unitV = self.potWell.getDepth()/unitE
         self.unitDelta = self.compound.getDelta()/unitE
-        self.nGridPoints = 350
+        self.nGridPoints = 100
         self.xMax = 3
         self.xMin = -3
         self.xAxisVector = np.linspace(self.xMin, self.xMax, self.nGridPoints)
@@ -47,39 +47,73 @@ class PotWellSolver:
         potVec[0:self.potWellBoundary1] = self.unitV
         potVec[self.potWellBoundary2:self.nGridPoints] = self.unitV
         V = diag(potVec)
-
-
-        diagP = (self.compound.getY1()/pi**2)*(k**2 + 2./self.stepSize**2)
-        subdiagP = -self.compound.getY1()/(self.stepSize**2*pi**2)
-        superdiagP = subdiagP
         P = zeros((self.nGridPoints, self.nGridPoints), dtype=complex)
+        Q = zeros((self.nGridPoints, self.nGridPoints), dtype=complex)
+        R = zeros((self.nGridPoints, self.nGridPoints), dtype=complex)
+        S = zeros((self.nGridPoints, self.nGridPoints), dtype=complex)
+        diagP = 0
+        subdiagP = 0
+        superdiagP = 0
+        diagQ = 0
+        subdiagQ = 0
+        superdiagQ = 0
+        diagS = 0
+        subdiagS = 0
+        superdiagS = 0
+        diagR = 0
+        subdiagR = 0
+        superdiagR = 0
+
+        if self.potWell.getNDirection() == 1:
+            diagP = (self.compound.getY1()/pi**2)*(k**2 + ky**2 + 2./self.stepSize**2)
+            subdiagP = -self.compound.getY1()/(self.stepSize**2*pi**2)
+            superdiagP = subdiagP
+
+            diagQ = (self.compound.getY2()/pi**2) * ((ky**2-2*k**2)+(2/self.stepSize**2))
+            subdiagQ = -self.compound.getY2()/(self.stepSize**2*pi**2)
+            superdiagQ = subdiagQ
+
+            diagR = (np.sqrt(3)*self.compound.getY2()/pi**2) * (-2/self.stepSize**2 + ky**2)
+            subdiagR = (np.sqrt(3)/pi**2)*(self.compound.getY2()/self.stepSize**2 - self.compound.getY3()*ky/self.stepSize)
+            superdiagR = (np.sqrt(3)/pi**2)*(self.compound.getY2()/self.stepSize**2 + self.compound.getY3()*ky/self.stepSize)
+
+
+            diagS = -2.*self.compound.getY3()*np.sqrt(3)*1j*ky*k/pi**2
+            subdiagS = np.sqrt(3)*self.compound.getY3()*k*1j/(pi**2*self.stepSize)
+            superdiagS = -subdiagS
+
+        elif self.potWell.getNDirection() == 3:
+            diagP = (self.compound.getY1()/pi**2)*(k**2 + ky**2 + 2./self.stepSize**2)
+            subdiagP = -self.compound.getY1()/(self.stepSize**2*pi**2)
+            superdiagP = subdiagP
+
+            diagQ = (self.compound.getY2()/pi**2) * (k**2 + ky**2 - (4/self.stepSize**2))
+            subdiagQ = 2*self.compound.getY2()/(self.stepSize**2*pi**2)
+            superdiagQ = subdiagQ
+
+            diagR = (1/pi**2) * (-np.sqrt(3)*self.compound.getY2()*(k**2 - ky**2) + 1j*2*np.sqrt(3)*self.compound.getY3()*k*ky)
+
+            subdiagS = (1j*self.compound.getY3()*np.sqrt(3))/(pi**2*self.stepSize) * (k-1j*ky)
+            superdiagS = -subdiagS
+
+
+
+
         i, j = indices(P.shape)
         P[i == j] = diagP
         P[i == j-1] = superdiagP
         P[i == j+1] = subdiagP
 
-        diagQ = (self.compound.getY2()/pi**2) * ((-2*k**2)+(2/self.stepSize**2))
-        subdiagQ = -self.compound.getY2()/(self.stepSize**2*pi**2)
-        superdiagQ = subdiagQ
-        Q = zeros((self.nGridPoints, self.nGridPoints), dtype=complex)
         i, j = indices(Q.shape)
         Q[i == j] = diagQ
         Q[i == j-1] = superdiagQ
         Q[i == j+1] = subdiagQ
 
-        diagR = (np.sqrt(3)*self.compound.getY2()/pi**2) * (-2/self.stepSize**2 + ky**2)
-        subdiagR = (np.sqrt(3)/pi**2)*(self.compound.getY2()/self.stepSize**2 - self.compound.getY3()*ky/self.stepSize)
-        superdiagR = (np.sqrt(3)/pi**2)*(self.compound.getY2()/self.stepSize**2 + self.compound.getY3()*ky/self.stepSize)
-        R = zeros((self.nGridPoints, self.nGridPoints), dtype=complex)
         i, j = indices(R.shape)
         R[i == j] = diagR
         R[i == j-1] = superdiagR
         R[i == j+1] = subdiagR
 
-        diagS = -2.*self.compound.getY3()*np.sqrt(3)*1j*ky*k/pi**2
-        subdiagS = np.sqrt(3)*self.compound.getY3()*k*1j/(pi**2*self.stepSize)
-        superdiagS = -np.sqrt(3)*self.compound.getY3()*k*1j/(pi**2*self.stepSize)
-        S = zeros((self.nGridPoints, self.nGridPoints), dtype=complex)
         i, j = indices(S.shape)
         S[i == j] = diagS
         S[i == j-1] = superdiagS
@@ -87,7 +121,7 @@ class PotWellSolver:
 
         HKL = None
         if self.matrixDim == 6:
-            Delta = diag(ones(self.nGridPoints)*self.unitDelta)
+            Delta = diag((ones(self.nGridPoints)*self.unitDelta))
             HKL = np.bmat([[P+Q+V, -S, R, zeros((self.nGridPoints, self.nGridPoints)), -S/np.sqrt(2), np.sqrt(2)*R],
                             [-S.conj().T, P-Q+V, zeros((self.nGridPoints, self.nGridPoints)), R, -np.sqrt(2)*Q, np.sqrt(3./2.)*S],
                             [R.conj().T, zeros((self.nGridPoints, self.nGridPoints)), P-Q+V, S, np.sqrt(3./2.)*S.conj().T, np.sqrt(2)*Q],

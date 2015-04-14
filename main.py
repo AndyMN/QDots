@@ -3,12 +3,17 @@ from PotentialWell import PotentialWell
 from PotWellSolver import PotWellSolver
 from Plotter import Plotter
 from pylab import *
-
+from scipy.sparse import issparse
+from scipy.sparse import diags
+from scipy.sparse.linalg import eigsh
 
 GaAs = Compound(GaAsValues)
-myPotWell = PotentialWell("x", 130, 1)
+myPotWell = PotentialWell("z", 130, 1)
+
 myPotWellSolver = PotWellSolver(GaAs, myPotWell, 6)
+
 myPotWellSolver.setGridPoints(100)
+
 myPlotter = Plotter()
 
 
@@ -16,10 +21,6 @@ kVec = arange(-3, 3, 0.1)
 
 myPlotter.plotMixing(myPotWellSolver, kVec)
 myPlotter.displayPlots()
-
-
-
-
 
 
 
