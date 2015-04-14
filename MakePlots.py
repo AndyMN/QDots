@@ -24,7 +24,7 @@ SmallPotWellSolverSiX = PotWellSolver(Si, potWellX, 4)
 myPlotter = Plotter()
 
 kVec = arange(-3, 3, 0.1)
-gridPoints = arange(10, 500, 10)
+gridPoints = arange(100, 2000, 100)
 
 myPlotter.plotEigenvalues(BigPotWellSolverGaAsX, kVec, 6)
 myPlotter.savePlots("GaAsBigXE.png")
@@ -45,6 +45,8 @@ myPlotter.plotEigenvectors(BigPotWellSolverGaAsX)
 myPlotter.savePlots("GaAsWaveX.png")
 myPlotter.plotEigenvectors(BigPotWellSolverGaAsZ)
 myPlotter.savePlots("GaAsWaveZ.png")
+myPlotter.plotGridPointAnalysis(BigPotWellSolverGaAsZ, gridPoints)
+myPlotter.savePlots("GaAsGridpointAnalysis.png")
 
 
 myPlotter.plotEigenvalues(BigPotWellSolverSiX, kVec, 6)
@@ -66,3 +68,11 @@ myPlotter.plotEigenvectors(BigPotWellSolverSiX)
 myPlotter.savePlots("SiWaveX.png")
 myPlotter.plotEigenvectors(BigPotWellSolverSiZ)
 myPlotter.savePlots("SiWaveZ.png")
+myPlotter.plotGridPointAnalysis(BigPotWellSolverSiZ, gridPoints)
+myPlotter.savePlots("SiGridpointAnalysis.png")
+
+depthVec = arange(100, 2000, 100)
+for depth in depthVec:
+    potWellZ.depth = depth
+    myPlotter.plotGridPointAnalysis(BigPotWellSolverSiZ, gridPoints)
+    myPlotter.savePlots("SiGridpointAnalysis"+str(depth)+".png")
