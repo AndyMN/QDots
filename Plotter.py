@@ -101,7 +101,7 @@ class Plotter:
     def setGridPointAnalysisPlotLabels(self, potWellSolver, nSmallest, k):
         self.xLabel = "# Gridpoints"
         self.yLabel = "E(meV)"
-        self.title = potWellSolver.compound.name+": E(N) op k = "+str(k)
+        self.title = potWellSolver.compound.name+": E(N) k = "+str(k)+" depth = "+str(potWellSolver.potWell.depth)+" meV"
         for i in xrange(nSmallest):
             self.legend.append("E"+str(i+1))
 
@@ -113,9 +113,9 @@ class Plotter:
         elif potWellSolver.matrixDim == 6:
             matrixType = "6x6"
         if not self.title:
-            self.title = potWellSolver.compound.name+": Golffuncties: put in "+potWellDirection+" richting ("+matrixType+")"
+            self.title = potWellSolver.compound.name+": Wavefunctions: Well in "+potWellDirection+" direction ("+matrixType+")"
         else:
-            self.title += " + Golffuncties: put in "+potWellDirection+" richting ("+matrixType+")"
+            self.title += " + Wavefunctions: Well in "+potWellDirection+" direction ("+matrixType+")"
         self.xLabel = potWellDirection
         self.yLabel = "Psi("+potWellDirection+")"
 
@@ -168,9 +168,9 @@ class Plotter:
         self.xLabel = "k"+directionOfK+" (1/cm)"
         potWellDirection = potWellSolver.potWell.direction
         if not self.title:
-            self.title = potWellSolver.compound.name+": Golffuncties Mixing: put in "+potWellDirection+" richting ("+matrixType+")"
+            self.title = potWellSolver.compound.name+": Wavefunction Mixing: Well in "+potWellDirection+" direction ("+matrixType+")"
         else:
-            self.title += " + Golffuncties Mixing: put in "+potWellDirection+" richting ("+matrixType+")"
+            self.title += " + Wavefunction Mixing: well in "+potWellDirection+" direction ("+matrixType+")"
         self.legend.append("HH"+potWellDirection)
         self.legend.append("LH"+potWellDirection)
         if potWellSolver.matrixDim == 6:
