@@ -8,6 +8,8 @@ class Plotter:
         self.xLabel = None
         self.yLabel = None
         self.legend = []
+        self.lineStyle = '-'
+        self.nPlots = 0
 
 
     def plotEigenvalues(self,potWellSolver, kVec, nSmallest):
@@ -17,8 +19,11 @@ class Plotter:
             for i in xrange(0, nSmallest):
                 plot(kVec, EMatrix[0][i],'+')
         else:
-            plot(kVec, EMatrix.T)
+            if self.nPlots > 0:
+                self.lineStyle = '--'
+            plot(kVec, EMatrix.T, self.lineStyle)
         self.setEigenvaluePlotLabels(potWellSolver, nSmallest)
+        self.nPlots += 1
 
     def plotEigenvectors(self, potWellSolver, k=0,  state=0):
         xVec = potWellSolver.xAxisVector
@@ -26,8 +31,11 @@ class Plotter:
         vectorMatrix = zeros((potWellSolver.nGridPoints, potWellSolver.matrixDim))
         for i in xrange(0, potWellSolver.matrixDim):
             vectorMatrix[:,i] = np.squeeze(np.array(eigenVector[i*potWellSolver.nGridPoints:(i+1)*potWellSolver.nGridPoints].real))
-        plot(xVec, vectorMatrix.real)
+        if self.nPlots > 0:
+            self.lineStyle = '--'
+        plot(xVec, vectorMatrix.real, self.lineStyle)
         self.setEigenvectorPlotLabels(potWellSolver)
+        self.nPlots += 1
 
     def plotMixing(self, potWellSolver, kVec, state=0):
         fractionMatrix = zeros((potWellSolver.matrixDim/2, len(kVec)))
@@ -42,8 +50,11 @@ class Plotter:
                 elif i == 2:
                     fractionMatrix[i][column] = fractions[4] + fractions[5]
             column += 1
-        plot(kVec, fractionMatrix.T)
+        if self.nPlots > 0:
+            self.lineStyle = '--'
+        plot(kVec, fractionMatrix.T, self.lineStyle)
         self.setMixingPlotLabels(potWellSolver)
+        self.nPlots += 1
 
     def plotGridPointAnalysis(self, potWellSolver, gridPointVec, nSmallest=1, k=0,  state=0):
         eigenValues = zeros((nSmallest, len(gridPointVec)))
@@ -56,8 +67,11 @@ class Plotter:
                 eigenValues[i][column] = w[i]
             column += 1
         potWellSolver.setGridPoints(startNGridPoints)
-        plot(gridPointVec, eigenValues.T)
+        if self.nPlots > 0:
+            self.lineStyle = '--'
+        plot(gridPointVec, eigenValues.T, self.lineStyle)
         self.setGridPointAnalysisPlotLabels(potWellSolver, nSmallest, k)
+        self.nPlots += 1
 
     def displayPlots(self):
         title(self.title)
@@ -65,6 +79,24 @@ class Plotter:
         ylabel(self.yLabel)
         legend(self.legend)
         show()
+        self.clearPlot()
+
+    def savePlots(self, fileName):
+        title(self.title)
+        xlabel(self.xLabel)
+        ylabel(self.yLabel)
+        legend(self.legend)
+        savefig(fileName)
+        self.clearPlot()
+
+    def clearPlot(self):
+        self.title = None
+        self.xLabel = None
+        self.yLabel = None
+        self.legend = []
+        self.lineStyle = '-'
+        self.nPlots = 0
+        clf()
 
     def setGridPointAnalysisPlotLabels(self, potWellSolver, nSmallest, k):
         self.xLabel = "# Gridpoints"
