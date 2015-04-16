@@ -62,6 +62,10 @@ class Plotter:
         column = 0
         for gridPoint in gridPointVec:
             print gridPoint
+            if gridPoint < 3000:
+                potWellSolver.setDense(1)
+            else:
+                potWellSolver.setDense(0)
             potWellSolver.setGridPoints(gridPoint)
             w = potWellSolver.getEigenValues(k, nSmallest)
             for i in xrange(nSmallest):
