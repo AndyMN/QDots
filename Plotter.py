@@ -61,6 +61,7 @@ class Plotter:
         startNGridPoints = potWellSolver.nGridPoints
         column = 0
         for gridPoint in gridPointVec:
+            print gridPoint
             potWellSolver.setGridPoints(gridPoint)
             w = potWellSolver.getEigenValues(k, nSmallest)
             for i in xrange(nSmallest):
