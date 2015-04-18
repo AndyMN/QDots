@@ -62,7 +62,7 @@ class Plotter:
         column = 0
         for gridPoint in gridPointVec:
             print gridPoint
-            if gridPoint < 3000:
+            if gridPoint < 2200:
                 potWellSolver.setDense(1)
             else:
                 potWellSolver.setDense(0)
@@ -77,6 +77,44 @@ class Plotter:
         plot(gridPointVec, eigenValues.T, self.lineStyle)
         self.setGridPointAnalysisPlotLabels(potWellSolver, nSmallest, k)
         self.nPlots += 1
+
+    def plotRotatedMixing(self, potWellSolver, kVec):
+
+        rotValues = zeros((2, len(kVec)))
+        rotateTo = None
+        if potWellSolver.potWell.nDirection == 1:
+            rotateTo = "z"
+        elif potWellSolver.potWell.nDirection == 3:
+            rotateTo = "x"
+        column = 0
+        print rotateTo
+        for k in kVec:
+            vals = potWellSolver.getMixing(k)
+            rotVals = potWellSolver.rotateMixing(vals, rotateTo)
+
+            rotValues[0][column] = rotVals[0]
+            rotValues[1][column] = rotVals[1]
+            column += 1
+        plot(kVec, rotValues.T)
+        self.setRotatedMixingPlotLabels(potWellSolver)
+
+    def setRotatedMixingPlotLabels(self, potWellSolver):
+        rotateTo = None
+        if potWellSolver.potWell.nDirection == 1:
+            rotateTo = "z"
+        elif potWellSolver.potWell.nDirection == 3:
+            rotateTo = "x"
+        if not self.title:
+            self.title = potWellSolver.compound.name+": Calculated rotated mixing for potwelll in "+rotateTo+" direction"
+        else:
+            self.title += " + Calculated rotated mixing for potwelll in "+rotateTo+" direction"
+        self.xLabel = "k"+potWellSolver.potWell.direction+" (1/cm)"
+        self.yLabel = "Fractions"
+        self.legend.append("HHrot")
+        self.legend.append("LHrot")
+
+
+
 
     def displayPlots(self):
         title(self.title)
