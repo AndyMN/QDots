@@ -237,7 +237,7 @@ class PotWellSolver:
         data = sorted(data, key=itemgetter(0))
         return data[state][1]
 
-    def getMixing(self, k, state):
+    def getMixing(self, k, state=0):
         w, v = self.calcEigs(k)
         data = [(w[i], v[:,i]) for i in xrange(self.matrixDim*self.nGridPoints)]
         data = sorted(data, key=itemgetter(0))
@@ -256,6 +256,36 @@ class PotWellSolver:
         for i in xrange(self.matrixDim):
             fractions.append(normSQ[i]/totalDensity)
         return fractions
+
+    def rotateMixing(self, fractions, rotateTo="z"):
+        a = np.sqrt(fractions[0])
+        b = np.sqrt(fractions[1])
+        c = np.sqrt(fractions[2])
+        d = np.sqrt(fractions[3])
+
+        aRot = None
+        bRot = None
+        cRot = None
+        dRot = None
+        if rotateTo == "z":
+            aRot = np.sqrt(2)/4*a - np.sqrt(6)/4*b + np.sqrt(6)/4*c - np.sqrt(2)/4*d
+            bRot = np.sqrt(6)/4*a - np.sqrt(2)/4*b - np.sqrt(2)/4*c + np.sqrt(6)/4*d
+            cRot = np.sqrt(6)/4*a - np.sqrt(2)/4*b - np.sqrt(2)/4*c - np.sqrt(6)/4*d
+            dRot = np.sqrt(2)/4*a + np.sqrt(6)/4*b + np.sqrt(6)/4*c + np.sqrt(2)/4*d
+        elif rotateTo == "x":
+            aRot = np.sqrt(2)/4*a + np.sqrt(6)/4*b + np.sqrt(6)/4*c + np.sqrt(2)/4*d
+            bRot = -np.sqrt(6)/4*a - np.sqrt(2)/4*b - np.sqrt(2)/4*c + np.sqrt(6)/4*d
+            cRot = np.sqrt(6)/4*a - np.sqrt(2)/4*b - np.sqrt(2)/4*c + np.sqrt(6)/4*d
+            dRot = -np.sqrt(2)/4*a + np.sqrt(6)/4*b - np.sqrt(6)/4*c + np.sqrt(2)/4*d
+
+        TotalDensity = aRot**2 + bRot**2 + cRot**2 + dRot**2
+        HeavyHole = (aRot**2+dRot**2)/TotalDensity
+        LightHole = (bRot**2 + cRot**2)/TotalDensity
+
+        both = []
+        both.append(HeavyHole)
+        both.append(LightHole)
+        return both
 
 
     def setXMax(self, xMax):
