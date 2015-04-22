@@ -62,7 +62,7 @@ class Plotter:
         column = 0
         for gridPoint in gridPointVec:
             print gridPoint
-            if gridPoint < 2200:
+            if gridPoint < 2000:
                 potWellSolver.setDense(1)
             else:
                 potWellSolver.setDense(0)
@@ -79,7 +79,6 @@ class Plotter:
         self.nPlots += 1
 
     def plotRotatedMixing(self, potWellSolver, kVec):
-
         rotValues = zeros((2, len(kVec)))
         rotateTo = None
         if potWellSolver.potWell.nDirection == 1:
@@ -87,7 +86,6 @@ class Plotter:
         elif potWellSolver.potWell.nDirection == 3:
             rotateTo = "x"
         column = 0
-        print rotateTo
         for k in kVec:
             vals = potWellSolver.getMixing(k)
             rotVals = potWellSolver.rotateMixing(vals, rotateTo)
@@ -98,6 +96,23 @@ class Plotter:
         plot(kVec, rotValues.T)
         self.setRotatedMixingPlotLabels(potWellSolver)
 
+    def plotBulkEigenValues(self, potWellSolver, kVec):
+        EigenvaluesMatrix = potWellSolver.getEigenValues(kVec, potWellSolver.matrixDim, True)
+        plot(kVec, EigenvaluesMatrix.T)
+        self.setBulkPlotLabels(potWellSolver)
+
+    def setBulkPlotLabels(self, potWellSolver):
+        self.xLabel = "k (1/cm)"
+        self.yLabel = "E (meV)"
+        self.legend.append("SO")
+        self.legend.append("LH")
+        self.legend.append("HH")
+        if self.title:
+            self.title += " + Bulk E(k)"
+        else:
+            self.title = potWellSolver.compound.name + ": Bulk E(k)"
+
+
     def setRotatedMixingPlotLabels(self, potWellSolver):
         rotateTo = None
         if potWellSolver.potWell.nDirection == 1:
@@ -105,9 +120,9 @@ class Plotter:
         elif potWellSolver.potWell.nDirection == 3:
             rotateTo = "x"
         if not self.title:
-            self.title = potWellSolver.compound.name+": Calculated rotated mixing for potwelll in "+rotateTo+" direction"
+            self.title = potWellSolver.compound.name+": Rotated mixing for well in "+potWellSolver.potWell.direction+" direction"
         else:
-            self.title += " + Calculated rotated mixing for potwelll in "+rotateTo+" direction"
+            self.title += " + Rotated mixing for well in "+potWellSolver.potWell.direction+" direction"
         self.xLabel = "k"+potWellSolver.potWell.direction+" (1/cm)"
         self.yLabel = "Fractions"
         self.legend.append("HHrot")
@@ -211,9 +226,9 @@ class Plotter:
         self.xLabel = "k"+directionOfK+" (1/cm)"
         potWellDirection = potWellSolver.potWell.direction
         if not self.title:
-            self.title = potWellSolver.compound.name+": Wavefunction Mixing: Well in "+potWellDirection+" direction ("+matrixType+")"
+            self.title = potWellSolver.compound.name+": Mixing: Well in "+potWellDirection+" direction ("+matrixType+")"
         else:
-            self.title += " + Wavefunction Mixing: well in "+potWellDirection+" direction ("+matrixType+")"
+            self.title += " + Mixing: well in "+potWellDirection+" direction ("+matrixType+")"
         self.legend.append("HH"+potWellDirection)
         self.legend.append("LH"+potWellDirection)
         if potWellSolver.matrixDim == 6:
