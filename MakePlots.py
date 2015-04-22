@@ -45,9 +45,13 @@ myPlotter.plotEigenvectors(BigPotWellSolverGaAsX)
 myPlotter.savePlots("GaAsWaveX.png")
 myPlotter.plotEigenvectors(BigPotWellSolverGaAsZ)
 myPlotter.savePlots("GaAsWaveZ.png")
+myPlotter.plotRotatedMixing(SmallPotWellSolverGaAsZ, kVec)
+myPlotter.plotMixing(SmallPotWellSolverGaAsX, kVec)
+myPlotter.savePlots("GaAsMixingRotationOfZ.png")
+myPlotter.plotRotatedMixing(SmallPotWellSolverGaAsX, kVec)
+myPlotter.plotMixing(SmallPotWellSolverGaAsZ, kVec)
+myPlotter.savePlots("GaAsMixingRotationOfX.png")
 
-myPlotter.plotGridPointAnalysis(BigPotWellSolverGaAsZ, gridPoints)
-myPlotter.savePlots("GaAsGridpointAnalysis.png")
 
 
 myPlotter.plotEigenvalues(BigPotWellSolverSiX, kVec, 6)
@@ -69,12 +73,22 @@ myPlotter.plotEigenvectors(BigPotWellSolverSiX)
 myPlotter.savePlots("SiWaveX.png")
 myPlotter.plotEigenvectors(BigPotWellSolverSiZ)
 myPlotter.savePlots("SiWaveZ.png")
+myPlotter.plotRotatedMixing(SmallPotWellSolverSiZ, kVec)
+myPlotter.plotMixing(SmallPotWellSolverSiX, kVec)
+myPlotter.savePlots("SiMixingRotationOfZ.png")
+myPlotter.plotRotatedMixing(SmallPotWellSolverSiX, kVec)
+myPlotter.plotMixing(SmallPotWellSolverSiZ, kVec)
+myPlotter.savePlots("SiMixingRotationOfX.png")
 
-myPlotter.plotGridPointAnalysis(BigPotWellSolverSiZ, gridPoints)
-myPlotter.savePlots("SiGridpointAnalysis.png")
 
-depthVec = arange(100, 2000, 100)
-for depth in depthVec:
-    potWellZ.depth = depth
-    myPlotter.plotGridPointAnalysis(BigPotWellSolverSiZ, gridPoints)
-    myPlotter.savePlots("SiGridpointAnalysis"+str(depth)+".png")
+kVec = arange(-10**7, 10**7, 10**5)
+
+myPlotter.plotBulkEigenValues(BigPotWellSolverSiZ, kVec)
+myPlotter.savePlots("SiBulkBig.png")
+myPlotter.plotBulkEigenValues(SmallPotWellSolverSiZ, kVec)
+myPlotter.savePlots("SiBulkSmall.png")
+
+myPlotter.plotBulkEigenValues(BigPotWellSolverGaAsZ, kVec)
+myPlotter.savePlots("GaAsBulkBig.png")
+myPlotter.plotBulkEigenValues(SmallPotWellSolverGaAsX, kVec)
+myPlotter.savePlots("GaAsBulkSmall.png")
