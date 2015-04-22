@@ -46,7 +46,7 @@ class PotWellSolver:
     def setGridPoints(self, nGridPoints):
         self.setParameters(nGridPoints)
 
-    def makeMatrix(self, k):
+    def makeMatrix(self, k, BULK=False):
         ky = 0
 
         P = None
@@ -54,6 +54,7 @@ class PotWellSolver:
         R= None
         S = None
         V = None
+        HKL = None
 
         diagP = 0
         subdiagP = 0
@@ -67,178 +68,212 @@ class PotWellSolver:
         diagR = 0
         subdiagR = 0
         superdiagR = 0
+        if not BULK:
+            if self.potWell.nDirection == 1:
+                diagP = (self.compound.y1/pi**2)*(k**2 + ky**2 + 2./self.stepSize**2)
+                subdiagP = -self.compound.y1/(self.stepSize**2*pi**2)
+                superdiagP = subdiagP
 
-        if self.potWell.nDirection == 1:
-            diagP = (self.compound.y1/pi**2)*(k**2 + ky**2 + 2./self.stepSize**2)
-            subdiagP = -self.compound.y1/(self.stepSize**2*pi**2)
-            superdiagP = subdiagP
+                diagQ = (self.compound.y2/pi**2) * ((ky**2-2*k**2)+(2/self.stepSize**2))
+                subdiagQ = -self.compound.y2/(self.stepSize**2*pi**2)
+                superdiagQ = subdiagQ
 
-            diagQ = (self.compound.y2/pi**2) * ((ky**2-2*k**2)+(2/self.stepSize**2))
-            subdiagQ = -self.compound.y2/(self.stepSize**2*pi**2)
-            superdiagQ = subdiagQ
-
-            diagR = (np.sqrt(3)*self.compound.y2/pi**2) * (-2/self.stepSize**2 + ky**2)
-            subdiagR = (np.sqrt(3)/pi**2)*(self.compound.y2/self.stepSize**2 - self.compound.y3*ky/self.stepSize)
-            superdiagR = (np.sqrt(3)/pi**2)*(self.compound.y2/self.stepSize**2 + self.compound.y3*ky/self.stepSize)
-
-
-            diagS = -2.*self.compound.y3*np.sqrt(3)*1j*ky*k/pi**2
-            subdiagS = np.sqrt(3)*self.compound.y3*k*1j/(pi**2*self.stepSize)
-            superdiagS = -subdiagS
-
-        elif self.potWell.nDirection == 3:
-            diagP = (self.compound.y1/pi**2)*(k**2 + ky**2 + 2./self.stepSize**2)
-            subdiagP = -self.compound.y1/(self.stepSize**2*pi**2)
-            superdiagP = subdiagP
-
-            diagQ = (self.compound.y2/pi**2) * (k**2 + ky**2 - (4/self.stepSize**2))
-            subdiagQ = 2*self.compound.y2/(self.stepSize**2*pi**2)
-            superdiagQ = subdiagQ
-
-            diagR = (1/pi**2) * (-np.sqrt(3)*self.compound.y2*(k**2 - ky**2) + 1j*2*np.sqrt(3)*self.compound.y3*k*ky)
-
-            subdiagS = (1j*self.compound.y3*np.sqrt(3))/(pi**2*self.stepSize) * (k-1j*ky)
-            superdiagS = -subdiagS
+                diagR = (np.sqrt(3)*self.compound.y2/pi**2) * (-2/self.stepSize**2 + ky**2)
+                subdiagR = (np.sqrt(3)/pi**2)*(self.compound.y2/self.stepSize**2 - self.compound.y3*ky/self.stepSize)
+                superdiagR = (np.sqrt(3)/pi**2)*(self.compound.y2/self.stepSize**2 + self.compound.y3*ky/self.stepSize)
 
 
+                diagS = -2.*self.compound.y3*np.sqrt(3)*1j*ky*k/pi**2
+                subdiagS = np.sqrt(3)*self.compound.y3*k*1j/(pi**2*self.stepSize)
+                superdiagS = -subdiagS
 
-        if self.Dense:
-            P = zeros((self.nGridPoints, self.nGridPoints), dtype=complex)
-            Q = zeros((self.nGridPoints, self.nGridPoints), dtype=complex)
-            R = zeros((self.nGridPoints, self.nGridPoints), dtype=complex)
-            S = zeros((self.nGridPoints, self.nGridPoints), dtype=complex)
-            i, j = indices(P.shape)
-            P[i == j] = diagP
-            P[i == j-1] = superdiagP
-            P[i == j+1] = subdiagP
+            elif self.potWell.nDirection == 3:
+                diagP = (self.compound.y1/pi**2)*(k**2 + ky**2 + 2./self.stepSize**2)
+                subdiagP = -self.compound.y1/(self.stepSize**2*pi**2)
+                superdiagP = subdiagP
 
-            i, j = indices(Q.shape)
-            Q[i == j] = diagQ
-            Q[i == j-1] = superdiagQ
-            Q[i == j+1] = subdiagQ
+                diagQ = (self.compound.y2/pi**2) * (k**2 + ky**2 - (4/self.stepSize**2))
+                subdiagQ = 2*self.compound.y2/(self.stepSize**2*pi**2)
+                superdiagQ = subdiagQ
 
-            i, j = indices(R.shape)
-            R[i == j] = diagR
-            R[i == j-1] = superdiagR
-            R[i == j+1] = subdiagR
+                diagR = (1/pi**2) * (-np.sqrt(3)*self.compound.y2*(k**2 - ky**2) + 1j*2*np.sqrt(3)*self.compound.y3*k*ky)
 
-            i, j = indices(S.shape)
-            S[i == j] = diagS
-            S[i == j-1] = superdiagS
-            S[i == j+1] = subdiagS
-
-            potVec = zeros(self.nGridPoints)
-            potVec[0:self.potWellBoundary1] = self.unitV
-            potVec[self.potWellBoundary2:self.nGridPoints] = self.unitV
-            V = diag(potVec)
-
-        elif not self.Dense:
-            Pdiag = ones(self.nGridPoints)*diagP
-            Psubdiag = ones(self.nGridPoints-1)*subdiagP
-            Psuperdiag = ones(self.nGridPoints-1)*superdiagP
-            P = diags([Psubdiag, Pdiag, Psuperdiag], [-1, 0, 1])
-
-            Qdiag = ones(self.nGridPoints)*diagQ
-            Qsubdiag = ones(self.nGridPoints-1)*subdiagQ
-            Qsuperdiag = ones(self.nGridPoints-1)*superdiagQ
-            Q = diags([Qsubdiag, Qdiag, Qsuperdiag], [-1, 0, 1])
-
-            Rdiag = ones(self.nGridPoints)*diagR
-            Rsubdiag = ones(self.nGridPoints-1)*subdiagR
-            Rsuperdiag = ones(self.nGridPoints-1)*superdiagR
-            R = diags([Rsubdiag, Rdiag, Rsuperdiag], [-1, 0, 1])
-
-            Sdiag = ones(self.nGridPoints)*diagS
-            Ssubdiag = ones(self.nGridPoints-1)*subdiagS
-            Ssuperdiag = ones(self.nGridPoints-1)*superdiagS
-            S = diags([Ssubdiag, Sdiag, Ssuperdiag], [-1, 0, 1])
-
-            potVec = zeros(self.nGridPoints)
-            potVec[0:self.potWellBoundary1] = self.unitV
-            potVec[self.potWellBoundary2:self.nGridPoints] = self.unitV
-            V = diags([potVec], [0])
+                subdiagS = (1j*self.compound.y3*np.sqrt(3))/(pi**2*self.stepSize) * (k-1j*ky)
+                superdiagS = -subdiagS
 
 
 
-        HKL = None
-        if self.Dense:
+            if self.Dense:
+                P = zeros((self.nGridPoints, self.nGridPoints), dtype=complex)
+                Q = zeros((self.nGridPoints, self.nGridPoints), dtype=complex)
+                R = zeros((self.nGridPoints, self.nGridPoints), dtype=complex)
+                S = zeros((self.nGridPoints, self.nGridPoints), dtype=complex)
+                i, j = indices(P.shape)
+                P[i == j] = diagP
+                P[i == j-1] = superdiagP
+                P[i == j+1] = subdiagP
+
+                i, j = indices(Q.shape)
+                Q[i == j] = diagQ
+                Q[i == j-1] = superdiagQ
+                Q[i == j+1] = subdiagQ
+
+                i, j = indices(R.shape)
+                R[i == j] = diagR
+                R[i == j-1] = superdiagR
+                R[i == j+1] = subdiagR
+
+                i, j = indices(S.shape)
+                S[i == j] = diagS
+                S[i == j-1] = superdiagS
+                S[i == j+1] = subdiagS
+
+                potVec = zeros(self.nGridPoints)
+                potVec[0:self.potWellBoundary1] = self.unitV
+                potVec[self.potWellBoundary2:self.nGridPoints] = self.unitV
+                V = diag(potVec)
+
+            elif not self.Dense:
+                Pdiag = ones(self.nGridPoints)*diagP
+                Psubdiag = ones(self.nGridPoints-1)*subdiagP
+                Psuperdiag = ones(self.nGridPoints-1)*superdiagP
+                P = diags([Psubdiag, Pdiag, Psuperdiag], [-1, 0, 1])
+
+                Qdiag = ones(self.nGridPoints)*diagQ
+                Qsubdiag = ones(self.nGridPoints-1)*subdiagQ
+                Qsuperdiag = ones(self.nGridPoints-1)*superdiagQ
+                Q = diags([Qsubdiag, Qdiag, Qsuperdiag], [-1, 0, 1])
+
+                Rdiag = ones(self.nGridPoints)*diagR
+                Rsubdiag = ones(self.nGridPoints-1)*subdiagR
+                Rsuperdiag = ones(self.nGridPoints-1)*superdiagR
+                R = diags([Rsubdiag, Rdiag, Rsuperdiag], [-1, 0, 1])
+
+                Sdiag = ones(self.nGridPoints)*diagS
+                Ssubdiag = ones(self.nGridPoints-1)*subdiagS
+                Ssuperdiag = ones(self.nGridPoints-1)*superdiagS
+                S = diags([Ssubdiag, Sdiag, Ssuperdiag], [-1, 0, 1])
+
+                potVec = zeros(self.nGridPoints)
+                potVec[0:self.potWellBoundary1] = self.unitV
+                potVec[self.potWellBoundary2:self.nGridPoints] = self.unitV
+                V = diags([potVec], [0])
+        elif BULK:
+            fraction = hbar**2/(2*massElectron)
+            P = self.compound.y1*k**2*fraction
+            Q = -2*self.compound.y2*k**2*fraction
+            R = 0
+            S = 0
+
             if self.matrixDim == 6:
-                Delta = diag((ones(self.nGridPoints)*self.unitDelta))
-                HKL = np.bmat([[P+Q+V, -S, R, zeros((self.nGridPoints, self.nGridPoints)), -S/np.sqrt(2), np.sqrt(2)*R],
-                            [-S.conj().T, P-Q+V, zeros((self.nGridPoints, self.nGridPoints)), R, -np.sqrt(2)*Q, np.sqrt(3./2.)*S],
-                            [R.conj().T, zeros((self.nGridPoints, self.nGridPoints)), P-Q+V, S, np.sqrt(3./2.)*S.conj().T, np.sqrt(2)*Q],
-                            [zeros((self.nGridPoints, self.nGridPoints)), R.conj().T, S.conj().T, P+Q+V, -np.sqrt(2)*R.conj().T, -S.conj().T/np.sqrt(2)],
-                            [-S.conj().T/np.sqrt(2), -np.sqrt(2)*Q.conj().T, np.sqrt(3./2.)*S, -np.sqrt(2)*R, P+Delta+V, zeros((self.nGridPoints, self.nGridPoints))],
-                            [np.sqrt(2)*R.conj().T, np.sqrt(3./2.)*S.conj().T, np.sqrt(2)*Q.conj().T, -S/np.sqrt(2), zeros((self.nGridPoints, self.nGridPoints)), P+Delta+V]])
+                Delta = self.compound.delta
+                HKL = -np.matrix([[P+Q, -S, R, 0, -S/np.sqrt(2), np.sqrt(2)*R],
+                        [-S.conjugate(), P-Q, 0, R, -np.sqrt(2)*Q, np.sqrt(3./2.)*S],
+                        [R.conjugate(), 0, P-Q, S, np.sqrt(3./2.)*S.conjugate(), np.sqrt(2)*Q],
+                        [0, R.conjugate(), S.conjugate(), P+Q, -np.sqrt(2)*R.conjugate(), -S.conjugate()/np.sqrt(2)],
+                        [-S.conjugate()/np.sqrt(2), -np.sqrt(2)*Q.conjugate(), np.sqrt(3./2.)*S, -np.sqrt(2)*R, P+Delta, 0],
+                        [np.sqrt(2)*R.conjugate(), np.sqrt(3./2.)*S.conjugate(), np.sqrt(2)*Q.conjugate(), -S/np.sqrt(2), 0, P+Delta]])
             elif self.matrixDim == 4:
-                HKL = np.bmat([[P+Q+V, -S, R, zeros((self.nGridPoints, self.nGridPoints))],
-                            [-S.conj().T, P-Q+V, zeros((self.nGridPoints, self.nGridPoints)), R],
-                            [R.conj().T, zeros((self.nGridPoints, self.nGridPoints)), P-Q+V, S],
-                            [zeros((self.nGridPoints, self.nGridPoints)), R.conj().T, S.conj().T, P+Q+V]])
-        elif not self.Dense:
-            if self.matrixDim == 6:
-                Delta = diags([ones(self.nGridPoints)*self.unitDelta], [0])
-                HKL = bmat([[P+Q+V, -S, R, zeros((self.nGridPoints, self.nGridPoints)), -S/np.sqrt(2), np.sqrt(2)*R],
-                            [-S.conj().T, P-Q+V, zeros((self.nGridPoints, self.nGridPoints)), R, -np.sqrt(2)*Q, np.sqrt(3./2.)*S],
-                            [R.conj().T, zeros((self.nGridPoints, self.nGridPoints)), P-Q+V, S, np.sqrt(3./2.)*S.conj().T, np.sqrt(2)*Q],
-                            [zeros((self.nGridPoints, self.nGridPoints)), R.conj().T, S.conj().T, P+Q+V, -np.sqrt(2)*R.conj().T, -S.conj().T/np.sqrt(2)],
-                            [-S.conj().T/np.sqrt(2), -np.sqrt(2)*Q.conj().T, np.sqrt(3./2.)*S, -np.sqrt(2)*R, P+Delta+V, zeros((self.nGridPoints, self.nGridPoints))],
-                            [np.sqrt(2)*R.conj().T, np.sqrt(3./2.)*S.conj().T, np.sqrt(2)*Q.conj().T, -S/np.sqrt(2), zeros((self.nGridPoints, self.nGridPoints)), P+Delta+V]])
-            elif self.matrixDim == 4:
-                HKL = bmat([[P+Q+V, -S, R, zeros((self.nGridPoints, self.nGridPoints))],
-                            [-S.conj().T, P-Q+V, zeros((self.nGridPoints, self.nGridPoints)), R],
-                            [R.conj().T, zeros((self.nGridPoints, self.nGridPoints)), P-Q+V, S],
-                            [zeros((self.nGridPoints, self.nGridPoints)), R.conj().T, S.conj().T, P+Q+V]])
+                HKL = -np.matrix([[P+Q, -S, R, 0],
+                                  [-S.conjugate(), P-Q, 0, R],
+                                  [R.conjugate(), 0, P-Q, S],
+                                  [0, R.conjugate(), S.conjugate(), P+Q]])
+
+
+
+        if not BULK:
+            if self.Dense:
+                if self.matrixDim == 6:
+                    Delta = diag((ones(self.nGridPoints)*self.unitDelta))
+                    HKL = np.bmat([[P+Q+V, -S, R, zeros((self.nGridPoints, self.nGridPoints)), -S/np.sqrt(2), np.sqrt(2)*R],
+                                [-S.conj().T, P-Q+V, zeros((self.nGridPoints, self.nGridPoints)), R, -np.sqrt(2)*Q, np.sqrt(3./2.)*S],
+                                [R.conj().T, zeros((self.nGridPoints, self.nGridPoints)), P-Q+V, S, np.sqrt(3./2.)*S.conj().T, np.sqrt(2)*Q],
+                                [zeros((self.nGridPoints, self.nGridPoints)), R.conj().T, S.conj().T, P+Q+V, -np.sqrt(2)*R.conj().T, -S.conj().T/np.sqrt(2)],
+                                [-S.conj().T/np.sqrt(2), -np.sqrt(2)*Q.conj().T, np.sqrt(3./2.)*S, -np.sqrt(2)*R, P+Delta+V, zeros((self.nGridPoints, self.nGridPoints))],
+                                [np.sqrt(2)*R.conj().T, np.sqrt(3./2.)*S.conj().T, np.sqrt(2)*Q.conj().T, -S/np.sqrt(2), zeros((self.nGridPoints, self.nGridPoints)), P+Delta+V]])
+                elif self.matrixDim == 4:
+                    HKL = np.bmat([[P+Q+V, -S, R, zeros((self.nGridPoints, self.nGridPoints))],
+                                [-S.conj().T, P-Q+V, zeros((self.nGridPoints, self.nGridPoints)), R],
+                                [R.conj().T, zeros((self.nGridPoints, self.nGridPoints)), P-Q+V, S],
+                                [zeros((self.nGridPoints, self.nGridPoints)), R.conj().T, S.conj().T, P+Q+V]])
+            elif not self.Dense:
+                if self.matrixDim == 6:
+                    Delta = diags([ones(self.nGridPoints)*self.unitDelta], [0])
+                    HKL = bmat([[P+Q+V, -S, R, zeros((self.nGridPoints, self.nGridPoints)), -S/np.sqrt(2), np.sqrt(2)*R],
+                                [-S.conj().T, P-Q+V, zeros((self.nGridPoints, self.nGridPoints)), R, -np.sqrt(2)*Q, np.sqrt(3./2.)*S],
+                                [R.conj().T, zeros((self.nGridPoints, self.nGridPoints)), P-Q+V, S, np.sqrt(3./2.)*S.conj().T, np.sqrt(2)*Q],
+                                [zeros((self.nGridPoints, self.nGridPoints)), R.conj().T, S.conj().T, P+Q+V, -np.sqrt(2)*R.conj().T, -S.conj().T/np.sqrt(2)],
+                                [-S.conj().T/np.sqrt(2), -np.sqrt(2)*Q.conj().T, np.sqrt(3./2.)*S, -np.sqrt(2)*R, P+Delta+V, zeros((self.nGridPoints, self.nGridPoints))],
+                                [np.sqrt(2)*R.conj().T, np.sqrt(3./2.)*S.conj().T, np.sqrt(2)*Q.conj().T, -S/np.sqrt(2), zeros((self.nGridPoints, self.nGridPoints)), P+Delta+V]])
+                elif self.matrixDim == 4:
+                    HKL = bmat([[P+Q+V, -S, R, zeros((self.nGridPoints, self.nGridPoints))],
+                                [-S.conj().T, P-Q+V, zeros((self.nGridPoints, self.nGridPoints)), R],
+                                [R.conj().T, zeros((self.nGridPoints, self.nGridPoints)), P-Q+V, S],
+                                [zeros((self.nGridPoints, self.nGridPoints)), R.conj().T, S.conj().T, P+Q+V]])
 
         return HKL
 
 
-    def calcEigs(self, k, nSmallest=6):
-        HKL = self.makeMatrix(k)
+    def calcEigs(self, k, nSmallest=6, BULK=False):
+        HKL = self.makeMatrix(k, BULK)
         w = None
         v = None
         if self.Dense:
             w, v = eigh(HKL)
-        elif self.Dense:
+        elif not self.Dense:
             w, v = eigsh(HKL, nSmallest, None, None, "SM")
         return w*unitE, v
 
-    def calcEigVals(self, k, nSmallest=6):
-        HKL = self.makeMatrix(k)
+    def calcEigVals(self, k, nSmallest=6, BULK=False):
+        HKL = self.makeMatrix(k,BULK)
         w = None
         if self.Dense:
             w = eigvalsh(HKL)
         elif not self.Dense:
             w,v = eigsh(HKL, nSmallest, None, None, "SM")
-        return w*unitE
+        if not BULK:
+            return w*unitE
+        elif BULK:
+            return w
 
-    def getEigenValues(self, kVec, nSmallest):
-        if type(kVec) == int:
-            eigenValues = self.calcEigVals(kVec)
-            eigenValues = sorted(eigenValues)
-            EArray = np.zeros(nSmallest)
-            for i in xrange(0, nSmallest):
-                EArray[i] = eigenValues[i*2].real
-            return EArray
-        else:
-            EMatrix = np.zeros((nSmallest, len(kVec)))
+    def getEigenValues(self, kVec, nSmallest, BULK=False):
+        if not BULK:
+            if type(kVec) == int:
+                eigenValues = self.calcEigVals(kVec)
+                eigenValues = sorted(eigenValues)
+                EArray = np.zeros(nSmallest)
+                for i in xrange(0, nSmallest):
+                    EArray[i] = eigenValues[i*2].real
+                return EArray
+            else:
+                EMatrix = np.zeros((nSmallest, len(kVec)))
+                column = 0
+                for k in kVec:
+                    eigenValues = self.calcEigVals(k, nSmallest*2)
+                    eigenValues = sorted(eigenValues)
+                    for i in xrange(0, nSmallest):
+                        EMatrix[i][column] = eigenValues[i*2].real
+                    column += 1
+                return EMatrix
+        elif BULK:
+            EMatrix = zeros((nSmallest/2, len(kVec)))
             column = 0
             for k in kVec:
-                eigenValues = self.calcEigVals(k, nSmallest*2)
+                eigenValues = self.calcEigVals(k, nSmallest, BULK)
                 eigenValues = sorted(eigenValues)
-                for i in xrange(0, nSmallest):
-                    EMatrix[i][column] = eigenValues[i*2].real
+                for i in xrange(nSmallest/2):
+                    EMatrix[i,column] = eigenValues[i*2]
                 column += 1
             return EMatrix
 
-    def getEigenvectors(self, k, state):
-        w, v = self.calcEigs(k)
+    def getEigenvectors(self, k, state, BULK=False):
+        w, v = self.calcEigs(k,BULK)
         data = [(w[i], v[:,i]) for i in xrange(0, self.matrixDim*self.nGridPoints)]
         data = sorted(data, key=itemgetter(0))
         return data[state][1]
 
-    def getMixing(self, k, state=0):
-        w, v = self.calcEigs(k)
+    def getMixing(self, k, state=0, BULK=False):
+        w, v = self.calcEigs(k,BULK)
         data = [(w[i], v[:,i]) for i in xrange(self.matrixDim*self.nGridPoints)]
         data = sorted(data, key=itemgetter(0))
         eigenVector = data[state][1]
