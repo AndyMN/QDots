@@ -15,7 +15,7 @@ class Compound:
         if params == GaAsValues:
             self.name = "GaAs"
         elif params == SiValues:
-            self.name = "SiO2"
+            self.name = "Si"
         else:
             self.name = "Unknown"
 
