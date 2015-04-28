@@ -24,9 +24,9 @@ class PotWellSolver:
         self.xMin = -3
         self.xAxisVector = np.linspace(self.xMin, self.xMax, self.nGridPoints)
         self.stepSize = (self.xMax-self.xMin)/float(len(self.xAxisVector))
-        self.potWellBoundary1 = len(self.xAxisVector)/2. - np.floor(self.potWell.width/(2.*self.stepSize))
-        self.potWellBoundary2 = len(self.xAxisVector)/2. + np.ceil(self.potWell.width/(2.*self.stepSize))
-
+        self.potWellBoundary1 = np.floor(len(self.xAxisVector)/2) - np.floor(self.potWell.width/(2.*self.stepSize))
+        self.potWellBoundary2 = np.floor(len(self.xAxisVector)/2) + np.ceil(self.potWell.width/(2.*self.stepSize))
+        self.potWellCenter = np.floor(len(self.xAxisVector)/2)
 
     def setParameters(self, nGridPoints, xMin=-3, xMax=3):
         self.nGridPoints = nGridPoints
@@ -34,8 +34,9 @@ class PotWellSolver:
         self.xMax = xMax
         self.xAxisVector = np.linspace(self.xMin, self.xMax, self.nGridPoints)
         self.stepSize = (self.xMax-self.xMin)/float(len(self.xAxisVector))
-        self.potWellBoundary1 = len(self.xAxisVector)/2. - np.floor(self.potWell.width/(2.*self.stepSize))
-        self.potWellBoundary2 = len(self.xAxisVector)/2. + np.ceil(self.potWell.width/(2.*self.stepSize))
+        self.potWellBoundary1 = np.floor(len(self.xAxisVector)/2) - np.floor(self.potWell.width/(2.*self.stepSize))
+        self.potWellBoundary2 = np.floor(len(self.xAxisVector)/2) + np.ceil(self.potWell.width/(2.*self.stepSize))
+        self.potWellCenter = np.floor(len(self.xAxisVector)/2)
 
     def setDense(self, bDense):
         self.Dense = bDense
@@ -266,7 +267,7 @@ class PotWellSolver:
                 column += 1
             return EMatrix
 
-    def getEigenvectors(self, k, state, BULK=False):
+    def getEigenvectors(self, k, state=0, BULK=False):
         w, v = self.calcEigs(k,BULK)
         data = [(w[i], v[:,i]) for i in xrange(0, self.matrixDim*self.nGridPoints)]
         data = sorted(data, key=itemgetter(0))
@@ -283,7 +284,7 @@ class PotWellSolver:
 
         normSQ = np.zeros(self.matrixDim)
         for i in xrange(self.matrixDim):
-            normSQ[i] = norm(splitVectors[:,i])**2
+            normSQ[i] = (splitVectors[:,i][self.potWellCenter]*splitVectors[:,i][self.potWellCenter].conjugate()).real
 
         totalDensity = sum(normSQ)
 
@@ -292,34 +293,58 @@ class PotWellSolver:
             fractions.append(normSQ[i]/totalDensity)
         return fractions
 
-    def rotateMixing(self, fractions, rotateTo="z"):
-        a = np.sqrt(fractions[0])
-        b = np.sqrt(fractions[1])
-        c = np.sqrt(fractions[2])
-        d = np.sqrt(fractions[3])
+    def getEnvelope(self, k, state=0, BULK=False):
+        w, v = self.calcEigs(k,BULK)
+        data = [(w[i], v[:,i]) for i in xrange(self.matrixDim*self.nGridPoints)]
+        data = sorted(data, key=itemgetter(0))
+        eigenVector = data[state][1]
+        splitVectors = np.zeros((self.nGridPoints, self.matrixDim), dtype=complex)
+        for i in xrange(self.matrixDim):
+            splitVectors[:,i] = np.squeeze(np.array(eigenVector[i*self.nGridPoints:(i+1)*self.nGridPoints]))
+        envelope = np.zeros(self.matrixDim, dtype=complex)
+        for i in xrange(self.matrixDim):
+            envelope[i] = splitVectors[:,i][self.potWellCenter]
+        return envelope
+
+
+    def rotateMixing(self, envelope, rotateTo="z"):
+        a = envelope[0]
+        b = envelope[1]
+        c = envelope[2]
+        d = envelope[3]
 
         aRot = None
         bRot = None
         cRot = None
         dRot = None
-        if rotateTo == "z":
+        if rotateTo == "x":
             aRot = np.sqrt(2)/4*a - np.sqrt(6)/4*b + np.sqrt(6)/4*c - np.sqrt(2)/4*d
             bRot = np.sqrt(6)/4*a - np.sqrt(2)/4*b - np.sqrt(2)/4*c + np.sqrt(6)/4*d
             cRot = np.sqrt(6)/4*a - np.sqrt(2)/4*b - np.sqrt(2)/4*c - np.sqrt(6)/4*d
             dRot = np.sqrt(2)/4*a + np.sqrt(6)/4*b + np.sqrt(6)/4*c + np.sqrt(2)/4*d
-        elif rotateTo == "x":
+        elif rotateTo == "z":
             aRot = np.sqrt(2)/4*a + np.sqrt(6)/4*b + np.sqrt(6)/4*c + np.sqrt(2)/4*d
             bRot = -np.sqrt(6)/4*a - np.sqrt(2)/4*b - np.sqrt(2)/4*c + np.sqrt(6)/4*d
             cRot = np.sqrt(6)/4*a - np.sqrt(2)/4*b - np.sqrt(2)/4*c + np.sqrt(6)/4*d
             dRot = -np.sqrt(2)/4*a + np.sqrt(6)/4*b - np.sqrt(6)/4*c + np.sqrt(2)/4*d
 
-        TotalDensity = aRot**2 + bRot**2 + cRot**2 + dRot**2
-        HeavyHole = (aRot**2+dRot**2)/TotalDensity
-        LightHole = (bRot**2 + cRot**2)/TotalDensity
+        HH1 = (aRot*aRot.conjugate())
+        HH2 = (dRot*dRot.conjugate())
+        LH1 = (bRot*bRot.conjugate())
+        LH2 = (cRot*cRot.conjugate())
+        Total = HH1 + HH2 + LH1 + LH2
+        HH1Frac = HH1/Total
+        HH2Frac = HH2/Total
+        LH1Frac = LH1/Total
+        LH2Frac = LH2/Total
+
+
+        HHTotalFrac = HH1Frac + HH2Frac
+        LHTotalFrac = LH1Frac + LH2Frac
 
         both = []
-        both.append(HeavyHole)
-        both.append(LightHole)
+        both.append(HHTotalFrac)
+        both.append(LHTotalFrac)
         return both
 
 
