@@ -87,11 +87,10 @@ class Plotter:
             rotateTo = "x"
         column = 0
         for k in kVec:
-            vals = potWellSolver.getMixing(k)
+            vals = potWellSolver.getEnvelope(k)
             rotVals = potWellSolver.rotateMixing(vals, rotateTo)
-
-            rotValues[0][column] = rotVals[0]
-            rotValues[1][column] = rotVals[1]
+            rotValues[0][column] = rotVals[0].real
+            rotValues[1][column] = rotVals[1].real
             column += 1
         plot(kVec, rotValues.T)
         self.setRotatedMixingPlotLabels(potWellSolver)
@@ -104,9 +103,13 @@ class Plotter:
     def setBulkPlotLabels(self, potWellSolver):
         self.xLabel = "k (1/cm)"
         self.yLabel = "E (meV)"
-        self.legend.append("SO")
-        self.legend.append("LH")
-        self.legend.append("HH")
+        if potWellSolver.matrixDim == 6:
+            self.legend.append("SO")
+            self.legend.append("LH")
+            self.legend.append("HH")
+        elif potWellSolver.matrixDim == 4:
+            self.legend.append("LH")
+            self.legend.append("HH")
         if self.title:
             self.title += " + Bulk E(k)"
         else:
