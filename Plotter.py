@@ -87,9 +87,9 @@ class Plotter:
             rotateTo = "x"
         column = 0
         for k in kVec:
-            rotVals = potWellSolver.rotateMixing(k, rotateTo)
-            rotValues[0][column] = rotVals[0].real
-            rotValues[1][column] = rotVals[1].real
+            rotVals = potWellSolver.rotateMixing(round(k,1), rotateTo)
+            rotValues[0][column] = rotVals[0]
+            rotValues[1][column] = rotVals[1]
             column += 1
         plot(kVec, rotValues.T, '*')
         self.setRotatedMixingPlotLabels(potWellSolver)
