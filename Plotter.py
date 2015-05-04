@@ -87,12 +87,11 @@ class Plotter:
             rotateTo = "x"
         column = 0
         for k in kVec:
-            vals = potWellSolver.getEnvelope(k)
-            rotVals = potWellSolver.rotateMixing(vals, rotateTo)
+            rotVals = potWellSolver.rotateMixing(k, rotateTo)
             rotValues[0][column] = rotVals[0].real
             rotValues[1][column] = rotVals[1].real
             column += 1
-        plot(kVec, rotValues.T)
+        plot(kVec, rotValues.T, '*')
         self.setRotatedMixingPlotLabels(potWellSolver)
 
     def plotBulkEigenValues(self, potWellSolver, kVec):
