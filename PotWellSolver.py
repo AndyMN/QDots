@@ -284,7 +284,7 @@ class PotWellSolver:
 
         normSQ = np.zeros(self.matrixDim)
         for i in xrange(self.matrixDim):
-            normSQ[i] = (splitVectors[:,i][self.potWellCenter]*splitVectors[:,i][self.potWellCenter].conjugate()).real
+            normSQ[i] = norm(splitVectors[:,i])**2
 
         totalDensity = sum(normSQ)
 
@@ -307,31 +307,32 @@ class PotWellSolver:
         return envelope
 
 
-    def rotateMixing(self, envelope, rotateTo="z"):
-        a = envelope[0]
-        b = envelope[1]
-        c = envelope[2]
-        d = envelope[3]
+    def rotateMixing(self, k, rotateTo="z"):
+        eigenVectors = self.getEigenvectors(k)
 
-        aRot = None
-        bRot = None
-        cRot = None
-        dRot = None
-        if rotateTo == "x":
-            aRot = np.sqrt(2)/4*a - np.sqrt(6)/4*b + np.sqrt(6)/4*c - np.sqrt(2)/4*d
-            bRot = np.sqrt(6)/4*a - np.sqrt(2)/4*b - np.sqrt(2)/4*c + np.sqrt(6)/4*d
-            cRot = np.sqrt(6)/4*a - np.sqrt(2)/4*b - np.sqrt(2)/4*c - np.sqrt(6)/4*d
-            dRot = np.sqrt(2)/4*a + np.sqrt(6)/4*b + np.sqrt(6)/4*c + np.sqrt(2)/4*d
-        elif rotateTo == "z":
-            aRot = np.sqrt(2)/4*a + np.sqrt(6)/4*b + np.sqrt(6)/4*c + np.sqrt(2)/4*d
-            bRot = -np.sqrt(6)/4*a - np.sqrt(2)/4*b - np.sqrt(2)/4*c + np.sqrt(6)/4*d
-            cRot = np.sqrt(6)/4*a - np.sqrt(2)/4*b - np.sqrt(2)/4*c + np.sqrt(6)/4*d
-            dRot = -np.sqrt(2)/4*a + np.sqrt(6)/4*b - np.sqrt(6)/4*c + np.sqrt(2)/4*d
+        splitVectors = np.zeros((self.nGridPoints, self.matrixDim), dtype=complex)
+        for i in xrange(self.matrixDim):
+            splitVectors[:,i] = np.squeeze(np.array(eigenVectors[i*self.nGridPoints:(i+1)*self.nGridPoints]))
 
-        HH1 = (aRot*aRot.conjugate())
-        HH2 = (dRot*dRot.conjugate())
-        LH1 = (bRot*bRot.conjugate())
-        LH2 = (cRot*cRot.conjugate())
+        H1rot = None
+        L1rot = None
+        L2rot = None
+        H2rot = None
+        if rotateTo == "z":
+            H1rot = np.sqrt(2)/4 * (splitVectors[:,0] + splitVectors[:,3]) + np.sqrt(6)/4 * (splitVectors[:,1] + splitVectors[:,2])
+            L1rot = np.sqrt(6)/4 * (splitVectors[:,3] - splitVectors[:,0]) + np.sqrt(2)/4 * (-splitVectors[:,1] - splitVectors[:,2])
+            L2rot = np.sqrt(6)/4 * (splitVectors[:,0] + splitVectors[:,3]) + np.sqrt(2)/4 * (-splitVectors[:,1] - splitVectors[:,2])
+            H2rot = np.sqrt(2)/4 * (splitVectors[:,3] - splitVectors[:,0]) + np.sqrt(6)/4 * (splitVectors[:,1] - splitVectors[:,2])
+        elif rotateTo == "x":
+            H1rot = np.sqrt(2)/4 * (splitVectors[:,0] - splitVectors[:,3]) + np.sqrt(6)/4 * (splitVectors[:,2] - splitVectors[:,1])
+            L1rot = np.sqrt(6)/4 * (splitVectors[:,3] + splitVectors[:,0]) + np.sqrt(2)/4 * (-splitVectors[:,1] - splitVectors[:,2])
+            L2rot = np.sqrt(6)/4 * (splitVectors[:,0] - splitVectors[:,3]) + np.sqrt(2)/4 * (-splitVectors[:,1] - splitVectors[:,2])
+            H2rot = np.sqrt(2)/4 * (splitVectors[:,3] + splitVectors[:,0]) + np.sqrt(6)/4 * (splitVectors[:,1] + splitVectors[:,2])
+
+        HH1 = norm(H1rot)**2
+        HH2 = norm(H2rot)**2
+        LH1 = norm(L1rot)**2
+        LH2 = norm(L2rot)**2
         Total = HH1 + HH2 + LH1 + LH2
         HH1Frac = HH1/Total
         HH2Frac = HH2/Total
