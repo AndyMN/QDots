@@ -293,19 +293,6 @@ class PotWellSolver:
             fractions.append(normSQ[i]/totalDensity)
         return fractions
 
-    def getEnvelope(self, k, state=0, BULK=False):
-        w, v = self.calcEigs(k,BULK)
-        data = [(w[i], v[:,i]) for i in xrange(self.matrixDim*self.nGridPoints)]
-        data = sorted(data, key=itemgetter(0))
-        eigenVector = data[state][1]
-        splitVectors = np.zeros((self.nGridPoints, self.matrixDim), dtype=complex)
-        for i in xrange(self.matrixDim):
-            splitVectors[:,i] = np.squeeze(np.array(eigenVector[i*self.nGridPoints:(i+1)*self.nGridPoints]))
-        envelope = np.zeros(self.matrixDim, dtype=complex)
-        for i in xrange(self.matrixDim):
-            envelope[i] = splitVectors[:,i][self.potWellCenter]
-        return envelope
-
 
     def rotateMixing(self, k, rotateTo="z"):
         eigenVectors = self.getEigenvectors(k)
@@ -313,6 +300,7 @@ class PotWellSolver:
         splitVectors = np.zeros((self.nGridPoints, self.matrixDim), dtype=complex)
         for i in xrange(self.matrixDim):
             splitVectors[:,i] = np.squeeze(np.array(eigenVectors[i*self.nGridPoints:(i+1)*self.nGridPoints]))
+
 
         H1rot = None
         L1rot = None
