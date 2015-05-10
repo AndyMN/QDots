@@ -78,7 +78,7 @@ class Plotter:
         self.setGridPointAnalysisPlotLabels(potWellSolver, nSmallest, k)
         self.nPlots += 1
 
-    def plotRotatedMixing(self, potWellSolver, kVec):
+    def plotRotatedMixing(self, potWellSolver, kVec, state=0):
         rotValues = zeros((2, len(kVec)))
         rotateTo = None
         if potWellSolver.potWell.nDirection == 1:
@@ -87,7 +87,7 @@ class Plotter:
             rotateTo = "x"
         column = 0
         for k in kVec:
-            rotVals = potWellSolver.rotateMixing(round(k,1), rotateTo)
+            rotVals = potWellSolver.rotateMixing(k, rotateTo, state)
             rotValues[0][column] = rotVals[0]
             rotValues[1][column] = rotVals[1]
             column += 1

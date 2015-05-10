@@ -23,8 +23,7 @@ SmallPotWellSolverSiX = PotWellSolver(Si, potWellX, 4)
 
 myPlotter = Plotter()
 
-kVec = arange(-3, 3, 0.1)
-gridPoints = arange(100, 5600, 500)
+kVec = arange(-3,3,0.1)
 
 myPlotter.plotEigenvalues(BigPotWellSolverGaAsX, kVec, 6)
 myPlotter.savePlots("GaAsBigXE.png")
