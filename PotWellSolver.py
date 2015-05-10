@@ -16,9 +16,6 @@ class PotWellSolver:
         self.potWell = potWell
         self.matrixDim = matrixDim
         self.unitV = self.potWell.depth/unitE
-        print self.unitV
-        print self.potWell.depth
-        print unitE
 
         self.unitDelta = self.compound.delta/unitE
 
@@ -79,33 +76,25 @@ class PotWellSolver:
         if not BULK:
             if self.potWell.nDirection == 1:
                 diagP = (self.compound.y1/pi**2)*(k**2 + ky**2 + 2./self.stepSize**2)
-                print diagP
                 subdiagP = -self.compound.y1/(self.stepSize**2*pi**2)
-                print subdiagP
                 superdiagP = subdiagP
-                print superdiagP
+
 
                 diagQ = (self.compound.y2/pi**2) * ((ky**2-2*k**2)+(2/self.stepSize**2))
-                print diagQ
                 subdiagQ = -self.compound.y2/(self.stepSize**2*pi**2)
-                print subdiagQ
                 superdiagQ = subdiagQ
-                print superdiagQ
+
 
 
                 diagR = (np.sqrt(3)*self.compound.y2/pi**2) * (-2/self.stepSize**2 + ky**2)
-                print diagR
                 subdiagR = (np.sqrt(3)/pi**2)*(self.compound.y2/self.stepSize**2 - self.compound.y3*ky/self.stepSize)
-                print subdiagR
                 superdiagR = (np.sqrt(3)/pi**2)*(self.compound.y2/self.stepSize**2 + self.compound.y3*ky/self.stepSize)
-                print superdiagR
+
 
                 diagS = -2.*self.compound.y3*np.sqrt(3)*1j*ky*k/pi**2
-                print diagS
                 subdiagS = np.sqrt(3)*self.compound.y3*k*1j/(pi**2*self.stepSize)
-                print subdiagS
                 superdiagS = -subdiagS
-                print superdiagS
+
 
 
             elif self.potWell.nDirection == 3:
