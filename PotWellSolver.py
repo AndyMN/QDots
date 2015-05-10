@@ -9,7 +9,6 @@ wellWidth = 100*10**(-8)  # in cm
 pi = math.pi
 unitE = (hbar**2*pi**2)/(2*massElectron*wellWidth**2)
 
-
 class PotWellSolver:
 
     def __init__(self, compound, potWell, matrixDim=4):
@@ -17,7 +16,12 @@ class PotWellSolver:
         self.potWell = potWell
         self.matrixDim = matrixDim
         self.unitV = self.potWell.depth/unitE
+        print self.unitV
+        print self.potWell.depth
+        print unitE
+
         self.unitDelta = self.compound.delta/unitE
+
         self.Dense = 1
         self.nGridPoints = 100
         self.xMax = 3
@@ -25,8 +29,11 @@ class PotWellSolver:
         self.xAxisVector = np.linspace(self.xMin, self.xMax, self.nGridPoints)
         self.stepSize = (self.xMax-self.xMin)/float(len(self.xAxisVector))
         self.potWellBoundary1 = np.floor(len(self.xAxisVector)/2) - np.floor(self.potWell.width/(2.*self.stepSize))
+
         self.potWellBoundary2 = np.floor(len(self.xAxisVector)/2) + np.ceil(self.potWell.width/(2.*self.stepSize))
+
         self.potWellCenter = np.floor(len(self.xAxisVector)/2)
+
 
     def setParameters(self, nGridPoints, xMin=-3, xMax=3):
         self.nGridPoints = nGridPoints
@@ -72,35 +79,57 @@ class PotWellSolver:
         if not BULK:
             if self.potWell.nDirection == 1:
                 diagP = (self.compound.y1/pi**2)*(k**2 + ky**2 + 2./self.stepSize**2)
+                print diagP
                 subdiagP = -self.compound.y1/(self.stepSize**2*pi**2)
+                print subdiagP
                 superdiagP = subdiagP
+                print superdiagP
 
                 diagQ = (self.compound.y2/pi**2) * ((ky**2-2*k**2)+(2/self.stepSize**2))
+                print diagQ
                 subdiagQ = -self.compound.y2/(self.stepSize**2*pi**2)
+                print subdiagQ
                 superdiagQ = subdiagQ
+                print superdiagQ
+
 
                 diagR = (np.sqrt(3)*self.compound.y2/pi**2) * (-2/self.stepSize**2 + ky**2)
+                print diagR
                 subdiagR = (np.sqrt(3)/pi**2)*(self.compound.y2/self.stepSize**2 - self.compound.y3*ky/self.stepSize)
+                print subdiagR
                 superdiagR = (np.sqrt(3)/pi**2)*(self.compound.y2/self.stepSize**2 + self.compound.y3*ky/self.stepSize)
-
+                print superdiagR
 
                 diagS = -2.*self.compound.y3*np.sqrt(3)*1j*ky*k/pi**2
+                print diagS
                 subdiagS = np.sqrt(3)*self.compound.y3*k*1j/(pi**2*self.stepSize)
+                print subdiagS
                 superdiagS = -subdiagS
+                print superdiagS
+
 
             elif self.potWell.nDirection == 3:
                 diagP = (self.compound.y1/pi**2)*(k**2 + ky**2 + 2./self.stepSize**2)
+
                 subdiagP = -self.compound.y1/(self.stepSize**2*pi**2)
+
                 superdiagP = subdiagP
 
+
                 diagQ = (self.compound.y2/pi**2) * (k**2 + ky**2 - (4/self.stepSize**2))
+
                 subdiagQ = 2*self.compound.y2/(self.stepSize**2*pi**2)
+
                 superdiagQ = subdiagQ
+
 
                 diagR = (1/pi**2) * (-np.sqrt(3)*self.compound.y2*(k**2 - ky**2) + 1j*2*np.sqrt(3)*self.compound.y3*k*ky)
 
+
                 subdiagS = (1j*self.compound.y3*np.sqrt(3))/(pi**2*self.stepSize) * (k-1j*ky)
+
                 superdiagS = -subdiagS
+
 
 
 
@@ -294,8 +323,8 @@ class PotWellSolver:
         return fractions
 
 
-    def rotateMixing(self, k, rotateTo="z"):
-        eigenVectors = self.getEigenvectors(k)
+    def rotateMixing(self, k, rotateTo="z", State=0):
+        eigenVectors = self.getEigenvectors(k, state=State)
 
         splitVectors = np.zeros((self.nGridPoints, self.matrixDim), dtype=complex)
         for i in xrange(self.matrixDim):
@@ -306,29 +335,29 @@ class PotWellSolver:
         L1rot = None
         L2rot = None
         H2rot = None
+
         if rotateTo == "z":
             H1rot = np.sqrt(2)/4 * (splitVectors[:,0] + splitVectors[:,3]) + np.sqrt(6)/4 * (splitVectors[:,1] + splitVectors[:,2])
-            L1rot = np.sqrt(6)/4 * (splitVectors[:,3] - splitVectors[:,0]) + np.sqrt(2)/4 * (-splitVectors[:,1] - splitVectors[:,2])
+            L1rot = np.sqrt(6)/4 * (splitVectors[:,3] - splitVectors[:,0]) + np.sqrt(2)/4 * (-splitVectors[:,1] + splitVectors[:,2])
             L2rot = np.sqrt(6)/4 * (splitVectors[:,0] + splitVectors[:,3]) + np.sqrt(2)/4 * (-splitVectors[:,1] - splitVectors[:,2])
             H2rot = np.sqrt(2)/4 * (splitVectors[:,3] - splitVectors[:,0]) + np.sqrt(6)/4 * (splitVectors[:,1] - splitVectors[:,2])
         elif rotateTo == "x":
             H1rot = np.sqrt(2)/4 * (splitVectors[:,0] - splitVectors[:,3]) + np.sqrt(6)/4 * (splitVectors[:,2] - splitVectors[:,1])
             L1rot = np.sqrt(6)/4 * (splitVectors[:,3] + splitVectors[:,0]) + np.sqrt(2)/4 * (-splitVectors[:,1] - splitVectors[:,2])
-            L2rot = np.sqrt(6)/4 * (splitVectors[:,0] - splitVectors[:,3]) + np.sqrt(2)/4 * (-splitVectors[:,1] - splitVectors[:,2])
+            L2rot = np.sqrt(6)/4 * (splitVectors[:,0] - splitVectors[:,3]) + np.sqrt(2)/4 * (splitVectors[:,1] - splitVectors[:,2])
             H2rot = np.sqrt(2)/4 * (splitVectors[:,3] + splitVectors[:,0]) + np.sqrt(6)/4 * (splitVectors[:,1] + splitVectors[:,2])
+
 
         HH1 = norm(H1rot)**2
         HH2 = norm(H2rot)**2
         LH1 = norm(L1rot)**2
         LH2 = norm(L2rot)**2
         Total = HH1 + HH2 + LH1 + LH2
-        HH1Frac = HH1/Total
-        HH2Frac = HH2/Total
         LH1Frac = LH1/Total
         LH2Frac = LH2/Total
 
 
-        HHTotalFrac = HH1Frac + HH2Frac
+        HHTotalFrac = (HH1 + HH2)/Total
         LHTotalFrac = LH1Frac + LH2Frac
 
         both = []
