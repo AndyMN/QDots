@@ -146,7 +146,7 @@ class Plotter:
         xlabel(self.xLabel)
         ylabel(self.yLabel)
         legend(self.legend)
-        savefig(fileName)
+        savefig(fileName, dpi=150)
         self.clearPlot()
 
     def clearPlot(self):
